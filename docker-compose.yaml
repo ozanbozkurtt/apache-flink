@@ -1,0 +1,71 @@
+version: "2.2"
+services:
+  jobmanager:
+    image: flink:latest
+    ports:
+      - "8081:8081"   
+    restart: always
+    command: jobmanager
+    environment:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager
+        high-availability.cluster-id: /cluster_one
+        high-availability.storageDir: file:///flink/recovery
+        high-availability.zookeeper.path.root: /flink
+        high-availability.zookeeper.quorum: zookeeper-1:2181
+        jobmanager.execution.failover-strategy: region
+        restart-strategy: fixed-delay
+        restart-strategy.fixed-delay.attempts: 3
+        restart-strategy.fixed-delay.delay: 30 s  
+
+  taskmanager:
+    image: flink:latest
+    depends_on:
+      - jobmanager
+    command: taskmanager
+    restart: always
+    scale: 3
+    environment:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager
+        taskmanager.numberOfTaskSlots: 2
+        high-availability.cluster-id: /cluster_one # important: customize per cluster
+        high-availability.storageDir: file:///flink/recovery
+        high-availability.zookeeper.path.root: /flink
+        high-availability.zookeeper.quorum: zookeeper-1:2181
+        jobmanager.execution.failover-strategy: region
+        restart-strategy: fixed-delay
+        restart-strategy.fixed-delay.attempts: 3
+        restart-strategy.fixed-delay.delay: 30 s  
+  zookeeper-1:
+    image: zookeeper
+    container_name: zookeeper
+    restart: always
+    ports:
+      - "2181:2181"
+      - "2888:2888"
+      - "3888:3888"    
+    environment:
+        ZOOKEEPER_CLIENT_PORT: 2181
+        ZOOKEEPER_SERVER_ID: 1
+        SERVERS: zookeeper-1:2888:3888;zookeeper-2:2888:3888
+    volumes:
+        - ./shared/flink:/shared
+  kafka:
+    image: bitnami/kafka 
+    container_name: kafka
+    depends_on:
+      - zookeeper-1
+    restart: always
+    ports:
+      - "9092:9092"
+      - "8082:8082"
+    environment:
+      ZOOKEEPER_SERVERS: zookeeper-1:2181
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper-1:2181
+      ZOOKEEPER_ROOT: /kafka
+    volumes:
+      - ./shared/kafka:/shared
