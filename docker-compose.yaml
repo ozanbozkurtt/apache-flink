@@ -31,7 +31,7 @@ services:
         FLINK_PROPERTIES=
         jobmanager.rpc.address: jobmanager
         taskmanager.numberOfTaskSlots: 2
-        high-availability.cluster-id: /cluster_one # important: customize per cluster
+        high-availability.cluster-id: /cluster_one 
         high-availability.storageDir: file:///flink/recovery
         high-availability.zookeeper.path.root: /flink
         high-availability.zookeeper.quorum: zookeeper-1:2181
