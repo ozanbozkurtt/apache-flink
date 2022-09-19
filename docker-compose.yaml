@@ -1,10 +1,10 @@
-version: "2.2"
+version: "3.3"
 services:
   jobmanager:
     image: flink:latest
     ports:
-      - "8081:8081"   
-    restart: always
+      - "8081:8081"
+    restart: unless-stopped
     command: jobmanager
     environment:
       - |
@@ -17,36 +17,36 @@ services:
         jobmanager.execution.failover-strategy: region
         restart-strategy: fixed-delay
         restart-strategy.fixed-delay.attempts: 3
-        restart-strategy.fixed-delay.delay: 30 s  
+        restart-strategy.fixed-delay.delay: 30 s
 
   taskmanager:
     image: flink:latest
     depends_on:
       - jobmanager
     command: taskmanager
-    restart: always
-    scale: 3
+    restart: unless-stopped
+#    scale: 3
     environment:
       - |
         FLINK_PROPERTIES=
         jobmanager.rpc.address: jobmanager
         taskmanager.numberOfTaskSlots: 2
-        high-availability.cluster-id: /cluster_one 
+        high-availability.cluster-id: /cluster_one # important: customize per cluster
         high-availability.storageDir: file:///flink/recovery
         high-availability.zookeeper.path.root: /flink
         high-availability.zookeeper.quorum: zookeeper-1:2181
         jobmanager.execution.failover-strategy: region
         restart-strategy: fixed-delay
         restart-strategy.fixed-delay.attempts: 3
-        restart-strategy.fixed-delay.delay: 30 s  
+        restart-strategy.fixed-delay.delay: 30 s
   zookeeper-1:
     image: zookeeper
     container_name: zookeeper
-    restart: always
+    restart: unless-stopped
     ports:
       - "2181:2181"
       - "2888:2888"
-      - "3888:3888"    
+      - "3888:3888"
     environment:
         ZOOKEEPER_CLIENT_PORT: 2181
         ZOOKEEPER_SERVER_ID: 1
@@ -54,11 +54,11 @@ services:
     volumes:
         - ./shared/flink:/shared
   kafka:
-    image: bitnami/kafka 
+    image: bitnami/kafka
     container_name: kafka
     depends_on:
       - zookeeper-1
-    restart: always
+    restart: unless-stopped
     ports:
       - "9092:9092"
       - "8082:8082"
