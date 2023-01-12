@@ -1,4 +1,4 @@
-# Apache Flink Cluster with Zookeeper and Kafka
+# Apache Flink Cluster with Zookeeper
 
 **Flink Properties**
 
